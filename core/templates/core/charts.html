@@ -54,7 +54,9 @@
           <div class="card card-chart h-100">
             <div class="card-body">
               <h5 class="card-title mb-3">Gastos por categoría</h5>
-              <canvas id="categoryChart" height="120"></canvas>
+              <div class="category-chart-wrap">
+                <canvas id="categoryChart" height="320"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -62,7 +64,7 @@
           <div class="card card-chart h-100">
             <div class="card-body">
               <h5 class="card-title mb-3">Gastos mensuales (últimos 12 meses)</h5>
-              <canvas id="monthlyChart" height="120"></canvas>
+              <canvas id="monthlyChart" height="320"></canvas>
             </div>
           </div>
         </div>
@@ -84,9 +86,32 @@ const categoryColorMap = {
   'Educación': '#22C55E',
   'Otro': '#94A3B8',
 };
-const fallbackChartColors = ['#FF7A7A', '#7AC8FF', '#C77DFF', '#FFB86B', '#6CE0B5', '#7ED0FF', '#A0AEC0'];
-const gridColor = 'rgba(191, 219, 254, 0.1)';
-const textColor = '#BFDBFE';
+const fallbackChartColors = ['#ff8d8d', '#8fa5ff', '#b18dff', '#ffc06a', '#58d39d', '#79c6ff', '#9eaacf'];
+
+function getThemeToken(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function getChartTheme() {
+  const textColor = getThemeToken('--text-secondary', '#9eaacf');
+  const gridColor = 'rgba(146, 168, 255, 0.2)';
+  const tooltipBg = getThemeToken('--bg-secondary', 'rgba(14, 21, 46, 0.92)');
+  const tooltipText = getThemeToken('--text-primary', '#f3f6ff');
+  const tooltipBorder = getThemeToken('--border', 'rgba(146, 168, 255, 0.3)');
+  const barFill = getThemeToken('--accent', '#8fa5ff');
+  const barBorder = getThemeToken('--accent-light', '#aebdff');
+
+  return {
+    textColor,
+    gridColor,
+    tooltipBg,
+    tooltipText,
+    tooltipBorder,
+    barFill,
+    barBorder,
+  };
+}
 
 function getCategoryColors(labels) {
   return labels.map((label, index) => categoryColorMap[label] || fallbackChartColors[index % fallbackChartColors.length]);
@@ -96,6 +121,7 @@ fetch('{% url "api_expenses_by_category" %}')
   .then(response => response.json())
   .then(data => {
     const categoryColors = getCategoryColors(data.labels);
+    const theme = getChartTheme();
     const ctx = document.getElementById('categoryChart').getContext('2d');
     new Chart(ctx, {
       type: 'doughnut',
@@ -113,22 +139,23 @@ fetch('{% url "api_expenses_by_category" %}')
       options: {
         responsive: true,
         maintainAspectRatio: true,
+        aspectRatio: 1,
         cutout: '62%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              color: textColor,
+              color: theme.textColor,
               padding: 15,
               usePointStyle: true,
               pointStyle: 'circle',
             }
           },
           tooltip: {
-            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-            titleColor: '#E5E7EB',
-            bodyColor: '#BFDBFE',
-            borderColor: 'rgba(59, 130, 246, 0.35)',
+            backgroundColor: theme.tooltipBg,
+            titleColor: theme.tooltipText,
+            bodyColor: theme.textColor,
+            borderColor: theme.tooltipBorder,
             borderWidth: 1,
             padding: 10,
           }
@@ -140,6 +167,7 @@ fetch('{% url "api_expenses_by_category" %}')
 fetch('{% url "api_expenses_by_month" %}')
   .then(response => response.json())
   .then(data => {
+    const theme = getChartTheme();
     const ctx = document.getElementById('monthlyChart').getContext('2d');
     new Chart(ctx, {
       type: 'bar',
@@ -148,8 +176,8 @@ fetch('{% url "api_expenses_by_month" %}')
         datasets: [{
           label: 'Gastos ($)',
           data: data.data,
-          backgroundColor: 'rgba(59, 130, 246, 0.65)',
-          borderColor: '#3B82F6',
+          backgroundColor: theme.barFill,
+          borderColor: theme.barBorder,
           borderWidth: 1,
           borderRadius: 8,
           borderSkipped: false,
@@ -158,7 +186,7 @@ fetch('{% url "api_expenses_by_month" %}')
       },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         layout: {
           padding: {
             top: 4,
@@ -168,10 +196,10 @@ fetch('{% url "api_expenses_by_month" %}')
           y: {
             beginAtZero: true,
             grid: {
-              color: gridColor,
+              color: theme.gridColor,
             },
             ticks: {
-              color: textColor,
+              color: theme.textColor,
               padding: 8,
             }
           },
@@ -180,7 +208,7 @@ fetch('{% url "api_expenses_by_month" %}')
               display: false,
             },
             ticks: {
-              color: textColor,
+              color: theme.textColor,
               maxRotation: 0,
             }
           }
@@ -188,14 +216,14 @@ fetch('{% url "api_expenses_by_month" %}')
         plugins: {
           legend: {
             labels: {
-              color: textColor,
+              color: theme.textColor,
             }
           },
           tooltip: {
-            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-            titleColor: '#E5E7EB',
-            bodyColor: '#BFDBFE',
-            borderColor: 'rgba(59, 130, 246, 0.35)',
+            backgroundColor: theme.tooltipBg,
+            titleColor: theme.tooltipText,
+            bodyColor: theme.textColor,
+            borderColor: theme.tooltipBorder,
             borderWidth: 1,
             padding: 10,
           }

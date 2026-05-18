@@ -5,10 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <script>
-      // Apply the saved theme before first paint to prevent light-mode flicker.
+      // Apply the saved theme before first paint to avoid a visual flash.
       (function () {
         try {
-          if (localStorage.getItem('theme') === 'light') {
+          var storedTheme = localStorage.getItem('expenseflow-theme') || localStorage.getItem('theme');
+          if (storedTheme === 'light') {
             document.documentElement.classList.add('light-mode');
           }
         } catch (error) {
@@ -121,7 +122,7 @@
       
       // Cargar tema guardado
       function loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('expenseflow-theme') || localStorage.getItem('theme') || 'dark';
         if (savedTheme === 'light') {
           html.classList.add('light-mode');
           themeIcon.classList.remove('mdi-moon-waning-crescent');
@@ -140,11 +141,13 @@
         
         if (isLight) {
           html.classList.remove('light-mode');
+          localStorage.setItem('expenseflow-theme', 'dark');
           localStorage.setItem('theme', 'dark');
           themeIcon.classList.remove('mdi-white-balance-sunny');
           themeIcon.classList.add('mdi-moon-waning-crescent');
         } else {
           html.classList.add('light-mode');
+          localStorage.setItem('expenseflow-theme', 'light');
           localStorage.setItem('theme', 'light');
           themeIcon.classList.remove('mdi-moon-waning-crescent');
           themeIcon.classList.add('mdi-white-balance-sunny');
