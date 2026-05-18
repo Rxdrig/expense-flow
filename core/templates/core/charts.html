@@ -1,0 +1,207 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+
+{% block titulo %}Gráficos{% endblock titulo %}
+
+{% block contenido %}
+<div class="main-panel">
+  <div class="content-wrapper analytics-page">
+    <section class="analytics-header mb-4">
+      <div class="row mb-0">
+        <div class="col-12 grid-margin stretch-card">
+          <div class="card">
+            <div class="card-body py-3 px-4">
+              <h3 class="mb-1">Análisis Financiero</h3>
+              <p class="text-muted mb-0">Visualiza cómo se distribuyen tus gastos por categoría y su evolución en los últimos 12 meses.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="analytics-summary mb-4">
+      <div class="row dashboard-kpi-row justify-content-center">
+        <div class="col-xl-4 col-md-6 grid-margin stretch-card">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="text-muted mb-2">Gastos totales</h6>
+              <div class="finance-amount">${{ total_expenses|floatformat:0|intcomma }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-4 col-md-6 grid-margin stretch-card">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="text-muted mb-2">Este mes</h6>
+              <div class="finance-amount">${{ total_this_month|floatformat:0|intcomma }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-4 col-md-6 grid-margin stretch-card">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="text-muted mb-2">Cantidad de gastos</h6>
+              <div class="finance-amount">{{ expense_count }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="analytics-charts">
+      <div class="row dashboard-balanced-row">
+        <div class="col-lg-6 grid-margin stretch-card">
+          <div class="card card-chart h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Gastos por categoría</h5>
+              <canvas id="categoryChart" height="120"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 grid-margin stretch-card">
+          <div class="card card-chart h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Gastos mensuales (últimos 12 meses)</h5>
+              <canvas id="monthlyChart" height="120"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock contenido %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const categoryColorMap = {
+  'Alimentación': '#F97316',
+  'Transporte': '#3B82F6',
+  'Entretenimiento': '#A855F7',
+  'Juegos': '#EC4899',
+  'Suscripciones': '#14B8A6',
+  'Educación': '#22C55E',
+  'Otro': '#94A3B8',
+};
+const fallbackChartColors = ['#FF7A7A', '#7AC8FF', '#C77DFF', '#FFB86B', '#6CE0B5', '#7ED0FF', '#A0AEC0'];
+const gridColor = 'rgba(191, 219, 254, 0.1)';
+const textColor = '#BFDBFE';
+
+function getCategoryColors(labels) {
+  return labels.map((label, index) => categoryColorMap[label] || fallbackChartColors[index % fallbackChartColors.length]);
+}
+
+fetch('{% url "api_expenses_by_category" %}')
+  .then(response => response.json())
+  .then(data => {
+    const categoryColors = getCategoryColors(data.labels);
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          data: data.data,
+          backgroundColor: categoryColors,
+          borderWidth: 0,
+          hoverBorderWidth: 0,
+          hoverOffset: 8,
+          spacing: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: textColor,
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle',
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+            titleColor: '#E5E7EB',
+            bodyColor: '#BFDBFE',
+            borderColor: 'rgba(59, 130, 246, 0.35)',
+            borderWidth: 1,
+            padding: 10,
+          }
+        }
+      }
+    });
+  });
+
+fetch('{% url "api_expenses_by_month" %}')
+  .then(response => response.json())
+  .then(data => {
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Gastos ($)',
+          data: data.data,
+          backgroundColor: 'rgba(59, 130, 246, 0.65)',
+          borderColor: '#3B82F6',
+          borderWidth: 1,
+          borderRadius: 8,
+          borderSkipped: false,
+          maxBarThickness: 38,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        layout: {
+          padding: {
+            top: 4,
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: gridColor,
+            },
+            ticks: {
+              color: textColor,
+              padding: 8,
+            }
+          },
+          x: {
+            grid: {
+              display: false,
+            },
+            ticks: {
+              color: textColor,
+              maxRotation: 0,
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: textColor,
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+            titleColor: '#E5E7EB',
+            bodyColor: '#BFDBFE',
+            borderColor: 'rgba(59, 130, 246, 0.35)',
+            borderWidth: 1,
+            padding: 10,
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock script %}

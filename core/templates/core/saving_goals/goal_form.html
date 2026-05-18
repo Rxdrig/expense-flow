@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+
+{% block titulo %}{{ page_title }}{% endblock titulo %}
+
+{% block contenido %}
+<div class="main-panel">
+  <div class="content-wrapper">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">{{ page_title }}</h4>
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {% for field in form %}
+              <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <small class="text-danger">{{ field.errors|striptags }}</small>
+                {% endif %}
+              </div>
+              {% endfor %}
+              <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-light">Cancelar</a>
+                <button class="btn btn-primary" type="submit">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock contenido %}

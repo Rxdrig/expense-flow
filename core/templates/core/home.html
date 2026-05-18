@@ -1,0 +1,344 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseFlow - Tu Gestor de Gastos Personal</title>
+    <link rel="stylesheet" href="{% static 'core/assets/vendors/mdi/css/materialdesignicons.min.css' %}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2d3748;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            top: -100px;
+            left: -100px;
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            bottom: -50px;
+            right: -50px;
+            animation: float 8s ease-in-out infinite reverse;
+            z-index: 1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(30px); }
+        }
+
+        .container-landing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .landing-content {
+            text-align: center;
+            max-width: 800px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            color: white;
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 3rem;
+            line-height: 1.6;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn-landing {
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-primary-landing {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary-landing:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-outline-landing {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline-landing:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+
+
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container-landing {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .features-list {
+                gap: 1.5rem;
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                gap: 0.75rem;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-landing {
+                width: 100%;
+                justify-content: center;
+            }
+
+            body::before,
+            body::after {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .logo-text {
+                font-size: 20px;
+            }
+
+            .feature-icon {
+                font-size: 2rem;
+            }
+
+
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Content -->
+    <div class="container-landing">
+        <div class="landing-content">
+            <!-- Logo -->
+            <div class="logo">
+                <i class="mdi mdi-wallet logo-icon"></i>
+                <span class="logo-text">ExpenseFlow</span>
+            </div>
+
+            <!-- Main Heading -->
+            <h1>Controla tus Gastos de Forma Inteligente</h1>
+            
+            <!-- Subtitle -->
+            <p class="subtitle">
+                Registra tus gastos, establece presupuestos mensuales, crea metas de ahorro y visualiza tu progreso financiero con gráficos interactivos.
+            </p>
+
+            <!-- Features -->
+            <div class="features-list">
+                <div class="feature">
+                    <i class="mdi mdi-wallet-outline feature-icon"></i>
+                    <div class="feature-title">Seguimiento de Gastos</div>
+                    <p class="feature-desc">Registra y categoriza todos tus gastos de forma fácil</p>
+                </div>
+
+                <div class="feature">
+                    <i class="mdi mdi-target-account feature-icon"></i>
+                    <div class="feature-title">Presupuesto Mensual</div>
+                    <p class="feature-desc">Define y controla tu presupuesto mensual</p>
+                </div>
+
+                <div class="feature">
+                    <i class="mdi mdi-chart-donut feature-icon"></i>
+                    <div class="feature-title">Análisis Detallado</div>
+                    <p class="feature-desc">Visualiza gráficos y tendencias de gasto</p>
+                </div>
+
+                <div class="feature">
+                    <i class="mdi mdi-bullseye feature-icon"></i>
+                    <div class="feature-title">Metas de Ahorro</div>
+                    <p class="feature-desc">Crea y alcanza tus objetivos financieros</p>
+                </div>
+
+                <div class="feature">
+                    <i class="mdi mdi-responsive feature-icon"></i>
+                    <div class="feature-title">Diseño Responsivo</div>
+                    <p class="feature-desc">Funciona en cualquier dispositivo</p>
+                </div>
+
+                <div class="feature">
+                    <i class="mdi mdi-lightning-bolt feature-icon"></i>
+                    <div class="feature-title">Rápido y Seguro</div>
+                    <p class="feature-desc">Sincronización instantánea de datos</p>
+                </div>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="button-group">
+                <a href="{% url 'register' %}" class="btn-landing btn-primary-landing">
+                    <i class="mdi mdi-account-plus"></i>
+                    Crear Cuenta Gratis
+                </a>
+                <a href="{% url 'login' %}" class="btn-landing btn-outline-landing">
+                    <i class="mdi mdi-login"></i>
+                    Inicia Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+</html>

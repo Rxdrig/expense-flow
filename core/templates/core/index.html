@@ -1,0 +1,306 @@
+{% extends 'core/base.html' %}
+{% load humanize category_tags %}
+
+{% block titulo %}Panel financiero - ExpenseFlow{% endblock titulo %}
+
+{% block contenido %}
+<div class="main-panel">
+  <div class="content-wrapper dashboard-page">
+    
+    <!-- Welcome Section -->
+    <section class="dashboard-section dashboard-welcome">
+      <div class="row mb-0">
+        <div class="col-12">
+          <div class="card corona-gradient-card finance-hero">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h2 class="welcome-title">¡Bienvenido, {{ user.first_name|default:user.username }}! 👋</h2>
+                  <p class="page-subtitle mb-0">Controla tus gastos y mantén tu presupuesto mensual al día</p>
+                </div>
+                <div style="font-size: 3rem; opacity: 0.3;">
+                  <i class="mdi mdi-wallet"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Cards -->
+    <section class="dashboard-section dashboard-kpis">
+      <div class="row">
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <p class="text-muted mb-1" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Gastos Totales</p>
+                </div>
+                <i class="mdi mdi-wallet-outline" style="font-size: 24px; color: #667eea; opacity: 0.5;"></i>
+              </div>
+              <div class="finance-amount">${{ total_expenses|floatformat:0|intcomma }}</div>
+              <p class="text-muted mt-2" style="font-size: 12px;">
+                <i class="mdi mdi-trending-up"></i> Desde el inicio
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <p class="text-muted mb-1" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Este Mes</p>
+                </div>
+                <i class="mdi mdi-calendar-month" style="font-size: 24px; color: #764ba2; opacity: 0.5;"></i>
+              </div>
+              <div class="finance-amount">${{ total_this_month|floatformat:0|intcomma }}</div>
+              <p class="text-muted mt-2" style="font-size: 12px;">
+                <i class="mdi mdi-clock-outline"></i> Gastos actuales
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <p class="text-muted mb-1" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Número de Gastos</p>
+                </div>
+                <i class="mdi mdi-receipt" style="font-size: 24px; color: #48bb78; opacity: 0.5;"></i>
+              </div>
+              <div class="finance-amount">{{ expense_count }}</div>
+              <p class="text-muted mt-2" style="font-size: 12px;">
+                <i class="mdi mdi-list-box-outline"></i> Transacciones
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <p class="text-muted mb-1" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Acciones Rápidas</p>
+                </div>
+                <i class="mdi mdi-lightning-bolt" style="font-size: 24px; color: #ed8936; opacity: 0.5;"></i>
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <a class="btn btn-primary btn-sm" href="{% url 'expense_create' %}" style="width: 100%; justify-content: center;">
+                  <i class="mdi mdi-plus"></i> Agregar Gasto
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Budget and Savings Goals -->
+    <section class="dashboard-section dashboard-budget-goals">
+      {% if monthly_budget %}
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h4 class="card-title mb-0">
+                    <i class="mdi mdi-target" style="color: #667eea;"></i> Presupuesto Mensual
+                  </h4>
+                </div>
+                <a href="{% url 'budget_edit' %}" class="btn btn-outline-primary btn-sm">Editar</a>
+              </div>
+
+              <div class="mt-3">
+                <p class="text-muted mb-2" style="font-size: 13px;">Presupuesto disponible</p>
+                <div class="finance-amount" style="margin-bottom: 1rem;">${{ monthly_budget|floatformat:0|intcomma }}</div>
+
+                <p class="text-muted mb-2" style="font-size: 13px;">Gastado este mes</p>
+                <p style="font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 1.5rem;">
+                  ${{ total_this_month|floatformat:0|intcomma }}
+                </p>
+
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted" style="font-size: 13px;">Uso del presupuesto</span>
+                    <span class="text-muted" style="font-size: 13px; font-weight: 600;">{{ budget_percentage }}%</span>
+                  </div>
+                  <div class="progress" style="height: 10px; border-radius: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ budget_percentage }}%;" aria-valuenow="{{ budget_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+
+                <div class="mt-3 p-3" style="background: rgba(102, 126, 234, 0.05); border-radius: 8px; border-left: 4px solid #667eea;">
+                  {% if remaining_budget >= 0 %}
+                    <p class="text-success mb-0" style="font-size: 14px; font-weight: 600;">
+                      <i class="mdi mdi-check-circle"></i> Presupuesto restante: <strong>${{ remaining_budget|floatformat:0|intcomma }}</strong>
+                    </p>
+                  {% else %}
+                    <p class="text-danger mb-0" style="font-size: 14px; font-weight: 600;">
+                      <i class="mdi mdi-alert-circle"></i> Excedido por: <strong>${{ remaining_budget|floatformat:0|intcomma }}</strong>
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title mb-0">
+                  <i class="mdi mdi-target-account" style="color: #48bb78;"></i> Metas de Ahorro
+                </h4>
+                <a href="{% url 'saving_goal_create' %}" class="btn btn-outline-primary btn-sm">+ Agregar</a>
+              </div>
+
+              {% if saving_goals %}
+                {% for goal in saving_goals|slice:":2" %}
+                <div class="mb-3 p-3" style="background: var(--color-background); border-radius: 8px; border-left: 4px solid #48bb78;">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span style="font-size: 18px;">{{ goal.emoji }}</span>
+                    <span style="font-weight: 600; color: var(--color-text-dark);">{{ goal.title }}</span>
+                    <a href="{% url 'saving_goal_edit' goal.pk %}" class="btn btn-outline-light btn-sm" style="padding: 4px 8px; font-size: 11px;">Editar</a>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted" style="font-size: 12px;">Ahorrado: <strong>${{ goal.saved_amount|floatformat:0|intcomma }}</strong></span>
+                    <span class="text-muted" style="font-size: 12px;"><strong>${{ goal.target_amount|floatformat:0|intcomma }}</strong></span>
+                  </div>
+
+                  <div class="progress" style="height: 8px; border-radius: 4px; margin-bottom: 0.5rem;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ goal.get_percentage }}%;" aria-valuenow="{{ goal.get_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 12px;">{{ goal.get_percentage }}%</span>
+                    <span class="text-muted" style="font-size: 12px;">Falta: ${{ goal.get_remaining|floatformat:0|intcomma }}</span>
+                  </div>
+
+                  {% if goal.deadline %}
+                  <p class="text-muted mt-2 mb-0" style="font-size: 11px;">
+                    <i class="mdi mdi-calendar"></i> {{ goal.deadline|date:"d/m/Y" }}
+                  </p>
+                  {% endif %}
+                </div>
+                {% endfor %}
+
+                {% if saving_goals|length > 2 %}
+                <div class="text-center mt-2">
+                  <a href="{% url 'saving_goals_list' %}" class="text-muted" style="font-size: 13px; text-decoration: none;">
+                    Ver todas las metas ({{ saving_goals|length }}) →
+                  </a>
+                </div>
+                {% endif %}
+              {% else %}
+                <div class="text-center py-3">
+                  <i class="mdi mdi-target-variant" style="font-size: 32px; color: #cbd5e0; opacity: 0.5; display: block; margin-bottom: 1rem;"></i>
+                  <p class="text-muted mb-3" style="font-size: 14px;">No tienes metas de ahorro</p>
+                  <a href="{% url 'saving_goal_create' %}" class="btn btn-primary btn-sm">Crear tu primera meta</a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body text-center py-4">
+              <i class="mdi mdi-target" style="font-size: 40px; color: #cbd5e0; margin-bottom: 1rem; display: block;"></i>
+              <h5 class="text-muted mb-3">Aún no tienes un presupuesto configurado</h5>
+              <a href="{% url 'budget_edit' %}" class="btn btn-primary btn-sm">Configurar Presupuesto</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body text-center py-4">
+              <i class="mdi mdi-target-account" style="font-size: 40px; color: #cbd5e0; margin-bottom: 1rem; display: block;"></i>
+              <h5 class="text-muted mb-3">Crea metas de ahorro</h5>
+              <a href="{% url 'saving_goal_create' %}" class="btn btn-primary btn-sm">+ Crear Meta</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Recent Expenses -->
+    <section class="dashboard-section dashboard-recent-expenses">
+      <div class="row mb-0">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">
+                  <i class="mdi mdi-history"></i> Gastos Recientes
+                </h5>
+                <a href="{% url 'expense_list' %}" class="btn btn-outline-primary btn-sm">Ver todos</a>
+              </div>
+
+              {% if latest_expenses %}
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Categoría</th>
+                      <th>Fecha</th>
+                      <th class="text-right">Monto</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for expense in latest_expenses %}
+                    <tr>
+                      <td><strong>{{ expense.title }}</strong></td>
+                      <td>{% category_badge expense.category %}</td>
+                      <td><span class="text-muted">{{ expense.date }}</span></td>
+                      <td class="text-right"><strong>${{ expense.amount|floatformat:0|intcomma }}</strong></td>
+                      <td class="text-right">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'expense_detail' expense.id %}">Ver</a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="text-center py-4">
+                <i class="mdi mdi-inbox-multiple-outline" style="font-size: 40px; color: #cbd5e0; margin-bottom: 1rem; display: block;"></i>
+                <p class="text-muted mb-3">Todavía no tienes gastos. Agrega el primero.</p>
+                <a href="{% url 'expense_create' %}" class="btn btn-primary btn-sm">Agregar Gasto</a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  // Mobile nav handler
+  const mobileNavToggle = document.getElementById('mobileNavToggle');
+  const navbarMain = document.querySelector('.navbar-main');
+  if (mobileNavToggle) {
+    mobileNavToggle.addEventListener('click', function() {
+      navbarMain.classList.toggle('mobile-open');
+    });
+  }
+</script>
+{% endblock contenido %}
