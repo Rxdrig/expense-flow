@@ -206,11 +206,9 @@ Creado como un proyecto personal de portafolio para demostrar capacidades de des
 - Funcionalidad de exportación de datos (CSV, PDF)
 - Plantillas de gastos recurrentes
 - Soporte multi-moneda
-- Versión de aplicación móvil
 - Sincronización en la nube
 - Reportes y análisis avanzados
-- Pronóstico de presupuesto
-- Carga y almacenamiento de imágenes de recibos
+
 
 ---
 
