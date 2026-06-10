@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -30,8 +30,10 @@
     {% block extra_css %}{% endblock extra_css %}
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+
     <!-- Modern Navbar -->
-    <nav class="navbar-main">
+    <nav class="navbar-main" aria-label="Navegación principal">
       <div class="navbar-container">
         <!-- Logo/Brand -->
         <div class="navbar-brand">
@@ -55,6 +57,10 @@
             <i class="mdi mdi-chart-donut"></i>
             <span>Gráficos</span>
           </a>
+          <a href="{% url 'expense_calendar' %}" class="nav-link-item {% if request.resolver_match.url_name == 'expense_calendar' %}active{% endif %}">
+            <i class="mdi mdi-calendar-month"></i>
+            <span>Calendario</span>
+          </a>
           <a href="{% url 'expense_list' %}" class="nav-link-item {% if request.resolver_match.url_name == 'expense_list' or request.resolver_match.url_name == 'expense_detail' %}active{% endif %}">
             <i class="mdi mdi-format-list-bulleted"></i>
             <span>Gastos</span>
@@ -67,7 +73,7 @@
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
-          <button class="btn-theme-toggle" id="themeToggle" type="button" title="Toggle theme">
+          <button class="btn-theme-toggle" id="themeToggle" type="button" title="Cambiar tema" aria-label="Cambiar tema">
             <i class="mdi mdi-moon-waning-crescent" id="themeIcon"></i>
           </button>
           
@@ -78,9 +84,9 @@
               <i class="mdi mdi-chevron-down"></i>
             </button>
             <div class="dropdown-menu" id="profileMenu">
-              <a href="{% url 'logout' %}" class="dropdown-item">
+              <a href="{% url 'logout' %}" class="dropdown-item logout-item">
                 <i class="mdi mdi-logout"></i>
-                <span>Cerrar sesión</span>
+                <span>Salir</span>
               </a>
             </div>
           </div>
@@ -89,8 +95,8 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="main-container">
-      <div class="dashboard-container">
+    <main id="main-content" class="main-container" role="main">
+      <div class="dashboard-container app-shell">
         {% if messages %}
         <div class="messages-container">
           {% for message in messages %}
@@ -102,7 +108,7 @@
         {% block contenido %}
         {% endblock contenido %}
       </div>
-    </div>
+    </main>
     <script src="{% static 'core/assets/vendors/js/vendor.bundle.base.js' %}"></script>
     <script src="{% static 'core/assets/vendors/chart.js/Chart.min.js' %}"></script>
     <script src="{% static 'core/assets/vendors/progressbar.js/progressbar.min.js' %}"></script>

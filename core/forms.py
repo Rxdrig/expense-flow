@@ -8,13 +8,16 @@ from .models import Expense, Budget, SavingGoal
 class ExpenseForm(ModelForm):
     class Meta:
         model = Expense
-        fields = ["title", "amount", "category", "date", "description"]
+        fields = ["title", "amount", "category", "date", "description", "is_recurring", "recurrence_frequency", "next_occurrence"]
         labels = {
             "title": "Título",
             "amount": "Monto",
             "category": "Categoría",
             "date": "Fecha",
             "description": "Descripción",
+            "is_recurring": "Gasto recurrente",
+            "recurrence_frequency": "Frecuencia",
+            "next_occurrence": "Próximo gasto",
         }
         widgets = {
             "date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
@@ -22,6 +25,9 @@ class ExpenseForm(ModelForm):
             "amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
             "category": forms.Select(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Notas opcionales"}),
+            "is_recurring": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "recurrence_frequency": forms.Select(attrs={"class": "form-control"}),
+            "next_occurrence": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -29,6 +35,51 @@ class ExpenseForm(ModelForm):
         self.fields["title"].widget.attrs.setdefault("class", "form-control")
         self.fields["amount"].widget.attrs.setdefault("class", "form-control")
         self.fields["category"].widget.attrs.setdefault("class", "form-control")
+        self.fields["recurrence_frequency"].required = False
+        self.fields["next_occurrence"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_recurring = cleaned_data.get("is_recurring")
+        recurrence_frequency = cleaned_data.get("recurrence_frequency")
+        next_occurrence = cleaned_data.get("next_occurrence")
+
+        if is_recurring and not recurrence_frequency:
+            self.add_error("recurrence_frequency", "Selecciona una frecuencia para el gasto recurrente.")
+
+        if not is_recurring:
+            cleaned_data["recurrence_frequency"] = ""
+            cleaned_data["next_occurrence"] = None
+        elif not next_occurrence:
+            cleaned_data["next_occurrence"] = cleaned_data.get("date")
+
+        return cleaned_data
+
+
+class ExpenseReportFilterForm(forms.Form):
+    date_start = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        label="Fecha inicio",
+    )
+    date_end = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        label="Fecha fin",
+    )
+    category = forms.ChoiceField(
+        required=False,
+        choices=[("", "Todas las categorías")] + list(Expense.CATEGORY_CHOICES),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Categoría",
+    )
+    scope = forms.ChoiceField(
+        required=False,
+        choices=[("all", "Todos los gastos"), ("filtered", "Solo filtrados")],
+        initial="filtered",
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Alcance",
+    )
 
 class BudgetForm(ModelForm):
     class Meta:

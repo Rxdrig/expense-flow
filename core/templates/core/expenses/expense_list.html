@@ -3,9 +3,157 @@
 
 {% block titulo %}Gastos{% endblock titulo %}
 
+{% block extra_css %}
+<style>
+  .expense-list-mobile {
+    display: none;
+  }
+
+  .expense-mobile-card {
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
+    box-shadow: var(--surface-shadow);
+    padding: 1rem;
+  }
+
+  .expense-mobile-card + .expense-mobile-card {
+    margin-top: 0.85rem;
+  }
+
+  .expense-mobile-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    align-items: flex-start;
+    margin-bottom: 0.65rem;
+  }
+
+  .expense-mobile-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+  }
+
+  .expense-mobile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  .expense-list-mobile .category-badge {
+    color: #111111;
+  }
+
+  .expense-list-mobile .category-badge .cat-label,
+  .expense-list-mobile .category-badge .cat-icon {
+    color: #111111;
+    opacity: 1;
+  }
+
+  .expense-mobile-amount {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--accent-light);
+    white-space: nowrap;
+  }
+
+  .expense-mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+  }
+
+  .expense-mobile-actions .btn {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+
+  .expense-mobile-empty {
+    border: 1px dashed color-mix(in srgb, var(--border) 84%, transparent);
+    border-radius: 16px;
+    padding: 1.2rem;
+    text-align: center;
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
+  }
+
+  @media (max-width: 767.98px) {
+    .expense-list-desktop {
+      display: none;
+    }
+
+    .expense-list-mobile {
+      display: block;
+    }
+
+    .expense-mobile-card {
+      padding: 0.95rem;
+    }
+
+    .expense-mobile-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .expense-mobile-actions .btn {
+      min-height: 42px;
+    }
+  }
+</style>
+{% endblock extra_css %}
+
 {% block contenido %}
 <div class="main-panel">
   <div class="content-wrapper">
+    <div class="row mb-4">
+      <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <div>
+                <h5 class="card-title mb-1">Exportar reporte</h5>
+                <p class="text-muted mb-0">Genera un reporte PDF o Excel con filtros por fecha y categoría.</p>
+              </div>
+              <span class="badge badge-info">Reportes</span>
+            </div>
+
+            <form method="get" class="row g-3 align-items-end">
+              <div class="col-md-3">
+                {{ report_form.date_start.label_tag }}
+                {{ report_form.date_start }}
+              </div>
+              <div class="col-md-3">
+                {{ report_form.date_end.label_tag }}
+                {{ report_form.date_end }}
+              </div>
+              <div class="col-md-3">
+                {{ report_form.category.label_tag }}
+                {{ report_form.category }}
+              </div>
+              <div class="col-md-3">
+                {{ report_form.scope.label_tag }}
+                {{ report_form.scope }}
+              </div>
+              <div class="col-12 export-actions mt-4">
+                <div class="export-actions-group">
+                  <button type="submit" formaction="{% url 'export_expenses_pdf' %}" class="btn btn-primary btn-sm">Exportar PDF</button>
+                  <button type="submit" formaction="{% url 'export_expenses_xlsx' %}" class="btn btn-outline-primary btn-sm">Exportar Excel</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row">
       <div class="col-12 grid-margin stretch-card">
         <div class="card">
@@ -19,11 +167,11 @@
             <div class="filters-section mb-4 p-3">
               <form method="get" class="row g-3">
                 <div class="col-md-4">
-                  <label for="search" class="form-label text-muted" style="font-size: 0.85rem;">Buscar</label>
+                  <label for="search" class="form-label text-muted">Buscar</label>
                   <input type="text" class="form-control" id="search" name="search" placeholder="Por título o descripción..." value="{{ search_query }}">
                 </div>
                 <div class="col-md-3">
-                  <label for="category" class="form-label text-muted" style="font-size: 0.85rem;">Categoría</label>
+                  <label for="category" class="form-label text-muted">Categoría</label>
                   <select class="form-control" id="category" name="category">
                     <option value="">Todas</option>
                     {% for cat_key, cat_label in categories %}
@@ -32,17 +180,17 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="month" class="form-label text-muted" style="font-size: 0.85rem;">Mes</label>
+                  <label for="month" class="form-label text-muted">Mes</label>
                   <input type="month" class="form-control" id="month" name="month" value="{{ selected_month }}">
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                  <button type="submit" class="btn btn-outline-primary btn-sm w-100">Filtrar</button>
-                  <a href="{% url 'expense_list' %}" class="btn btn-outline-light btn-sm w-100 ms-2">Limpiar</a>
+                <div class="col-md-2 d-flex align-items-end filters-actions">
+                  <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+                  <a href="{% url 'expense_list' %}" class="btn btn-outline-light btn-sm">Limpiar</a>
                 </div>
               </form>
             </div>
 
-            <div class="table-responsive">
+            <div class="expense-list-desktop table-responsive">
               <table class="table table-hover">
                 <thead>
                   <tr>
@@ -64,6 +212,9 @@
                       <a class="btn btn-outline-info btn-sm" href="{% url 'expense_detail' expense.id %}">Ver</a>
                       <a class="btn btn-outline-warning btn-sm" href="{% url 'expense_update' expense.id %}">Editar</a>
                       <a class="btn btn-outline-danger btn-sm" href="{% url 'expense_delete' expense.id %}">Eliminar</a>
+                      {% if expense.is_recurring_expense %}
+                      <span class="badge badge-info ml-2">{{ expense.recurrence_frequency_label|default:"Recurrente" }}</span>
+                      {% endif %}
                     </td>
                   </tr>
                   {% empty %}
@@ -73,6 +224,39 @@
                   {% endfor %}
                 </tbody>
               </table>
+            </div>
+
+            <div class="expense-list-mobile">
+              {% for expense in expenses %}
+              <div class="expense-mobile-card">
+                <div class="expense-mobile-top">
+                  <div>
+                    <div class="expense-mobile-title">{{ expense.title }}</div>
+                    <div class="expense-mobile-meta">
+                      <span>{{ expense.date }}</span>
+                      {% if expense.is_recurring_expense %}
+                      <span class="badge badge-info">{{ expense.recurrence_frequency_label|default:"Recurrente" }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="expense-mobile-amount">${{ expense.amount|floatformat:0|intcomma }}</div>
+                </div>
+
+                <div class="expense-mobile-meta mb-2">
+                  {% category_badge expense.category %}
+                </div>
+
+                <div class="expense-mobile-actions">
+                  <a class="btn btn-outline-info btn-sm" href="{% url 'expense_detail' expense.id %}">Ver</a>
+                  <a class="btn btn-outline-warning btn-sm" href="{% url 'expense_update' expense.id %}">Editar</a>
+                  <a class="btn btn-outline-danger btn-sm" href="{% url 'expense_delete' expense.id %}">Eliminar</a>
+                </div>
+              </div>
+              {% empty %}
+              <div class="expense-mobile-empty">
+                Aún no registras gastos.
+              </div>
+              {% endfor %}
             </div>
           </div>
         </div>

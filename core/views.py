@@ -1,16 +1,20 @@
 from decimal import Decimal
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Q
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.http import JsonResponse
 from django.utils import timezone
 
-from .forms import CustomUserCreationForm, ExpenseForm, BudgetForm, SavingGoalForm
+from .forms import CustomUserCreationForm, ExpenseForm, BudgetForm, SavingGoalForm, ExpenseReportFilterForm
 from .models import Expense, Budget, SavingGoal
+from .services import advance_recurring_expenses, ensure_recurring_defaults, build_report_filename, filter_expenses_for_report
+from .services.calendar import build_month_calendar
+from .services.exporters import build_pdf_report, build_xlsx_report
 
 
 def _get_user_budget(user):
@@ -18,10 +22,16 @@ def _get_user_budget(user):
     return Budget.objects.filter(user=user).first()
 
 
+def _sync_recurring_expenses(user):
+    return advance_recurring_expenses(user)
+
+
 @login_required
 def index(request):
+    _sync_recurring_expenses(request.user)
     expenses = Expense.objects.filter(user=request.user)
     month_start = timezone.localdate().replace(day=1)
+    today = timezone.localdate()
 
     total_expenses = expenses.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
     total_this_month = expenses.filter(date__gte=month_start).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
@@ -39,6 +49,12 @@ def index(request):
 
     # Get saving goals for user
     saving_goals = SavingGoal.objects.filter(user=request.user)
+    upcoming_fixed_expenses = expenses.filter(date__gte=today).order_by("date")[:5]
+    upcoming_recurring_templates = expenses.filter(
+        is_recurring=True,
+        next_occurrence__isnull=False,
+        next_occurrence__gte=today,
+    ).order_by("next_occurrence")[:5]
 
     data = {
         "total_expenses": total_expenses,
@@ -50,12 +66,15 @@ def index(request):
         "budget_percentage": budget_percentage,
         "budget": budget,
         "saving_goals": saving_goals,
+        "upcoming_fixed_expenses": upcoming_fixed_expenses,
+        "upcoming_recurring_templates": upcoming_recurring_templates,
     }
     return render(request, "core/index.html", data)
 
 
 @login_required
 def charts(request):
+    _sync_recurring_expenses(request.user)
     expenses = Expense.objects.filter(user=request.user)
     month_start = timezone.localdate().replace(day=1)
 
@@ -101,6 +120,7 @@ def home(request):
 @login_required
 def expense_list(request):
     """Display list of user's expenses with filtering options."""
+    _sync_recurring_expenses(request.user)
     expenses = Expense.objects.filter(user=request.user)
     
     # Filter by category
@@ -130,6 +150,7 @@ def expense_list(request):
         "selected_category": category or '',
         "selected_month": month or '',
         "search_query": search or '',
+        "report_form": ExpenseReportFilterForm(initial={"scope": "filtered", "category": category or ''}),
     }
     return render(request, "core/expenses/expense_list.html", context)
 
@@ -137,6 +158,7 @@ def expense_list(request):
 @login_required
 def expense_detail(request, expense_id):
     """Display details of a specific expense."""
+    _sync_recurring_expenses(request.user)
     expense = get_object_or_404(Expense, id=expense_id, user=request.user)
     return render(request, "core/expenses/expense_detail.html", {"expense": expense})
 
@@ -150,6 +172,7 @@ def expense_create(request):
     if request.method == "POST" and form.is_valid():
         expense = form.save(commit=False)
         expense.user = request.user
+        ensure_recurring_defaults(expense)
         expense.save()
         messages.success(request, "Gasto creado correctamente.")
         return redirect("expense_list")
@@ -173,7 +196,9 @@ def expense_update(request, expense_id):
     budget = _get_user_budget(request.user)
     
     if request.method == "POST" and form.is_valid():
-        form.save()
+        updated_expense = form.save(commit=False)
+        ensure_recurring_defaults(updated_expense)
+        updated_expense.save()
         messages.success(request, "Gasto actualizado correctamente.")
         return redirect("expense_list")
     
@@ -196,6 +221,70 @@ def expense_delete(request, expense_id):
         messages.success(request, "Gasto eliminado correctamente.")
         return redirect("expense_list")
     return render(request, "core/expenses/expense_confirm_delete.html", {"expense": expense})
+
+
+@login_required
+def expense_calendar(request):
+    _sync_recurring_expenses(request.user)
+    current_date = timezone.localdate()
+    year = request.GET.get("year")
+    month = request.GET.get("month")
+    category = request.GET.get("category") or ""
+
+    try:
+        year = int(year) if year else current_date.year
+        month = int(month) if month else current_date.month
+    except ValueError:
+        year = current_date.year
+        month = current_date.month
+
+    calendar_data = build_month_calendar(request.user, year=year, month=month, category=category or None)
+    month_start = calendar_data["month_start"]
+    previous_month = month_start.replace(day=1) - timedelta(days=1)
+    next_month = month_start.replace(day=28) + timedelta(days=4)
+    next_month = next_month.replace(day=1)
+
+    return render(
+        request,
+        "core/expenses/expense_calendar.html",
+        {
+            **calendar_data,
+            "categories": Expense.CATEGORY_CHOICES,
+            "selected_category": category,
+            "selected_category_label": dict(Expense.CATEGORY_CHOICES).get(category, "Todas las categorías"),
+            "previous_month": previous_month,
+            "next_month": next_month,
+        },
+    )
+
+
+@login_required
+def export_expenses_pdf(request):
+    _sync_recurring_expenses(request.user)
+    form = ExpenseReportFilterForm(request.GET or None)
+    form.is_valid()
+    expenses = filter_expenses_for_report(request.user, form.cleaned_data if form.is_valid() else {})
+    pdf_bytes = build_pdf_report(request.user, expenses)
+    filename = build_report_filename(request.user, "pdf")
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def export_expenses_xlsx(request):
+    _sync_recurring_expenses(request.user)
+    form = ExpenseReportFilterForm(request.GET or None)
+    form.is_valid()
+    expenses = filter_expenses_for_report(request.user, form.cleaned_data if form.is_valid() else {})
+    xlsx_bytes = build_xlsx_report(request.user, expenses)
+    filename = build_report_filename(request.user, "xlsx")
+    response = HttpResponse(
+        xlsx_bytes,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 # API endpoints for charts

@@ -12,10 +12,18 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
               <h4 class="card-title mb-0">{{ expense.title }}</h4>
-              {% category_badge expense.category %}
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                {% category_badge expense.category %}
+                {% if expense.is_recurring_expense %}
+                <span class="badge badge-info">{{ expense.recurrence_frequency_label|default:"Recurrente" }}</span>
+                {% endif %}
+              </div>
             </div>
             <p><strong>Monto:</strong> ${{ expense.amount|floatformat:0|intcomma }}</p>
             <p><strong>Fecha:</strong> {{ expense.date }}</p>
+            {% if expense.is_recurring_expense %}
+            <p><strong>Próximo gasto:</strong> {{ expense.next_occurrence|default:expense.date }}</p>
+            {% endif %}
             <p><strong>Descripción:</strong></p>
             <p class="text-muted">{{ expense.description|default:'No hay descripción registrada.' }}</p>
             <div class="d-flex justify-content-end mt-4">

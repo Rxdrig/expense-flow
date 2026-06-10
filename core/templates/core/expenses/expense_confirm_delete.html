@@ -12,6 +12,9 @@
           <div class="card-body text-center">
             <h4 class="card-title">Eliminar gasto</h4>
             <p class="mb-4">¿Seguro que deseas eliminar <strong>{{ expense.title }}</strong> por <strong>${{ expense.amount|floatformat:0|intcomma }}</strong>?</p>
+            {% if expense.is_recurring %}
+            <p class="text-muted mb-4">Este gasto es recurrente. Al eliminarlo, se detendrán las futuras generaciones automáticas.</p>
+            {% endif %}
             <form method="post">
               {% csrf_token %}
               <a href="{% url 'expense_list' %}" class="btn btn-outline-light mr-2">Cancelar</a>

@@ -21,6 +21,18 @@ class Expense(models.Model):
         (CATEGORY_OTHER, "Otro"),
     ]
 
+    RECURRING_FREQUENCY_NONE = ""
+    RECURRING_FREQUENCY_DAILY = "daily"
+    RECURRING_FREQUENCY_WEEKLY = "weekly"
+    RECURRING_FREQUENCY_MONTHLY = "monthly"
+
+    RECURRING_FREQUENCY_CHOICES = [
+        (RECURRING_FREQUENCY_NONE, "No recurrente"),
+        (RECURRING_FREQUENCY_DAILY, "Diario"),
+        (RECURRING_FREQUENCY_WEEKLY, "Semanal"),
+        (RECURRING_FREQUENCY_MONTHLY, "Mensual"),
+    ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -31,6 +43,21 @@ class Expense(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default=CATEGORY_OTHER)
     date = models.DateField()
     description = models.TextField(blank=True)
+    is_recurring = models.BooleanField(default=False)
+    recurrence_frequency = models.CharField(
+        max_length=10,
+        choices=RECURRING_FREQUENCY_CHOICES,
+        blank=True,
+        default=RECURRING_FREQUENCY_NONE,
+    )
+    next_occurrence = models.DateField(null=True, blank=True)
+    recurrence_parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="generated_instances",
+        on_delete=models.SET_NULL,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -39,6 +66,21 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.amount}"
+
+    @property
+    def recurring_source(self):
+        return self if self.is_recurring else self.recurrence_parent
+
+    @property
+    def is_recurring_expense(self):
+        return bool(self.is_recurring or self.recurrence_parent_id)
+
+    @property
+    def recurrence_frequency_label(self):
+        source = self.recurring_source
+        if not source:
+            return ""
+        return dict(self.RECURRING_FREQUENCY_CHOICES).get(source.recurrence_frequency, "")
 
 
 class Budget(models.Model):
