@@ -203,8 +203,7 @@ Creado como un proyecto personal de portafolio para demostrar capacidades de des
 
 ## Mejoras Futuras
 
-- Funcionalidad de exportación de datos (CSV, PDF)
-- Plantillas de gastos recurrentes
+
 - Soporte multi-moneda
 - Sincronización en la nube
 - Reportes y análisis avanzados
